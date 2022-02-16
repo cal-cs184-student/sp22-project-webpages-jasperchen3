@@ -3,6 +3,54 @@
 		<title> Project 1 Writeup </title>
 	</head>
 	<body>
-		Project 1 here
+		<h1> Task 1: Drawing Single-Color Triangles </h1>
+		<img src="task1.png" width="500" height="400">
+		<p> In the first task of this project, given the three coordinates of a triangle, we rasterize the triangle by sampling the different points on the screen.
+		We then evaluate if each point is in our triangle. This is done by taking each side of the triangle as a line and evaluating if the point is to a specific side of the line.
+		Given that the point is to the interior side (the side that is closer to the other sides) of each line or on each line, we know the point is in the triangle, and can color that pixel value a specific color.
+		Now, instead of sampling all the points on our screen, we sample our points in the x direction starting from the closest pixel to the left of the vertex with the smallest x value till the closest pixel to the vertex with the largest x value.
+		By repeating this in the y direction, we’re sampling all the points in a bounding box of the triangle, making our solution no worse than one that checks each sample within the bounding box of the triangle (because that’s exactly what we’re doing).
+		It is worth mentioning that the orientation of the vertex parameters can affect the insideTriangle() function which determines whether a point is in the triangle or not.
+		We solve this problem by calling the function twice, one with the vertices in v0, v1, v2 order and one in the opposite.
+		If either one is true, then the point will be inside the triangle. </p>
+
+		<h1> Task 2: Antialiasing by Supersampling </h1>
+		<img src="task2rate1.png" width="500" height="400">
+		<img src="task2rate4.png" width="500" height="400">
+		<img src="task2rate16.png" width="500" height="400">
+		<p> For our supersampling in this section, we still sample around all the pixel values in the bounding box of the triangle. For each pixel area, instead of sampling the center of the pixel square, we’ll sample sample_rate number of points inside the square.
+		The x position of the point is calculated by x + (interval * i) + interval/2 where interval = 1/sqrt(sample_rate), i is an integer with the range [0, sqrt(sample_rate) - 1].
+		The y position of the point is calculated by y + (interval * j)	+ interval/2 where j is an integer with the range [0, sqrt(sample_rate) - 1]. The points are found by iterating over the values of i and j.
+		We had to make a few modifications to the rasterization pipeline. The first modification was that since we were sampling multiple locations in a pixel box, we needed more memory.
+		We did this by storing our points in the sample_buffer and expanding it to store width * height * sample_rate number of Color objects. We expanded the size in set_sample_rate() and set_framebuffer_target().
+		The buffers were also cleared in these methods. Each set of sample_rate points for a specific pixel block would be stored consecutively in the sample_buffer.
+		In order to access a specific point given that x, y corresponded to the pixel box coordinate and n (x location in pixel block), m corresponded to the point in the pixel box, (0, 0) being the top left, we accessed a specific point by sample_buffer[y * (width * sample_rate) + ((x * sample_rate) + (m * interval) + n)] where Interval = sqrt(sample_rate).
+		Given this configuration, fill_pixel() took three extra optional arguments: super, i, j. If super was false (default), then the all the points corresponding to a single pixel box would be filled with the same color. Hence, we would store sample_rate number of Color objects, each with the same color, in the sample_buffer. This was done so that the line and point rasterization wouldn’t break. If super was true, then a single Color object would be stored at a specific index calculated by the formula above.
+		Lastly, we used supersampling to antialias our triangles by averaging all the supersampled points corresponding to a single pixel and then assigning the averaged Color object to the specific pixel. This was done in resolve_to_framebuffer where we took all our stored supersampled Color objects in sample_buffer and used them to fill in our framebuffer. It is worth mentioning that this method to antialias is the same as convoling f(x,y) by a 1-pixel box-blur and then sampling at every pixel. The upside to our method is that we don’t need a convolution function. </p>
+
+		<p> In the screenshots, we see that sampling with a sample_rate of one gives us a lot of jaggies. This is due to the fact that a given pixel is colored only if the center of the pixel is in the triangle.
+		You can image that we see the jaggies because the part of the triangle that covers a pixel but not its center is missing. With a sampling_rate of four, we now see a nice blur between the main triangle and the white screen. This is because now, the pixels that were partially covered by the triangle are colored according to an average color. The average color is calculated by averaging up the colors of the four points in a pixel box.
+		If a point is in the triangle, it will be the same color as the triangle and if a point is not in the triangle, it will be the color of the background. By averaging these points we get a blurred effect that removes the sharp jaggies and allows the triangle to “blend” in. By increasing the sampling rate to 9, we now average more points together which leads to a smoother blend. Finally with a sampling rate of 16, we see a very smooth blend as we’re now averaging 16 points per pixel. It is interesting to note that the higher the sampling_rate doesn’t mean a better visual blend in all cases. It depends on the shape of the triangle and how it covers up the supersampled points. </p>
+
+		<h1> Task 3: Transforms </h1>
+		<img src ="task3.png" width="500" height="400">
+		<p> In this drawing, we’re trying to show a person kicking a soccer ball or as the real one’s call it, a European football. </p>
+
+		<h1> Task 4: Barycentric Coordinates </h1>
+		<img src ="task4.png" width="500" height="400">
+		<p> Barycentric coordinates are a special features of triangles that linearly interpolate attributes at the vertices of the triangle to generate attributes for other points of the triangle.
+		These attributes can be coordinates, Colors, textures etc. In the image of the singular triangle for example, we can see that the vertices have specific colors: red, black and pink.
+		However, all the colors at every other pixel are generated via barycentric coordinates. </p>
+
+		<h1> Task 5: "Pixel Sampling" for Texture Mapping </h1>
+		<img src="task5np1.png" width="375" height="300">
+		<img src="task5np16.png" width="375" height="300">
+		<img src="task5bp1.png" width="375" height="300">
+		<img src="task5bp16.png" width="375" height="300">
+		<p> Pixel sampling refers to obtaining a feature (in this case a Color object) given a specific coordinate on the continuous plane and pixels associated with a discrete coordinate space. In this task, we used pixel sampling to obtain a Color object associated with a specific texture coordinate given our texture image with discrete pixels. The specific texture coordinate is associated with a supersampled point generated when we conduct supersampling to rasterize our triangle. The texture coordinate itself is obtained through linear interpolation through barycentric coordinates using the three texture coordinates that map to the three image coordinates. In terms of pixel sampling, the two types of pixel sampling conducted in this task were nearest and bilinear. In nearest pixel sampling, given the (u, v) coordinate, the given texel is set to the nearest texel
+		In the pictures, we are zoomed in at the ‘NIA’ of California on the UC Berkeley seal. we can see that the nearest pixel sampling along with the sampling rate of 1 is the graniest image. There’s no sense of blur and the image looks very distorted. When we increase the sampling rate to 16, we see a better fade with the pixels and the image is not as grainy. However, it’s still easy to differentiate the pixels as their colors are not blended thoroughly. When we take a look at the bilinear pixel sampling at a sample rate of 1, we instantly see an improvement from the linear pixel sampling. A lot of the gaps between the letters are erased and the letters look more complete. Some might even argue that bilinear sampling at a sampling rate of 1 looks better than nearest pixel sampling at a sampling rate of 16. Speaking of which, a bilinear sampling at a sampling rate of 16 looks very sharp and blended. The image looks continuous rather than pixels coming together to form a visual. It seems that someone has taken a brush over the nearest pixel sampling image. There will be a large difference between bilinear sampling and nearest sampling when the picture is minimized or maximized. Then the texels don’t map to the pixels on a one to one ratio. Getting the nearest pixel may cause the image to be very grainy and not present itself with a flow. In those cases, it’s better to extrapolate the Color by examining the different pixels around the texel which is done by bilinear interpolation. </p>
+
+
+
 	</body>
 </html>
