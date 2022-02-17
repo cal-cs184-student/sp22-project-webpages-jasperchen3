@@ -6,7 +6,7 @@
 		<h1> Project 1: Rasterizer </h1>
 		<p> Ahmed Baqai </p>
 		<p> Jasper Chen </p>
-		
+
 		<h1> Task 1: Drawing Single-Color Triangles </h1>
 		<img src="task1.png" width="500" height="400">
 		<p> In the first task of this project, given the three coordinates of a triangle, we rasterize the triangle by sampling the different points on the screen.
@@ -57,16 +57,21 @@
 		<p> In the pictures, we are zoomed in at the ‘NIA’ of California on the UC Berkeley seal. we can see that the nearest pixel sampling along with the sampling rate of 1 is the graniest image. There’s no sense of blur and the image looks very distorted. When we increase the sampling rate to 16, we see a better fade with the pixels and the image is not as grainy. However, it’s still easy to differentiate the pixels as their colors are not blended thoroughly. When we take a look at the bilinear pixel sampling at a sample rate of 1, we instantly see an improvement from the linear pixel sampling. A lot of the gaps between the letters are erased and the letters look more complete. Some might even argue that bilinear sampling at a sampling rate of 1 looks better than nearest pixel sampling at a sampling rate of 16. Speaking of which, a bilinear sampling at a sampling rate of 16 looks very sharp and blended. The image looks continuous rather than pixels coming together to form a visual. It seems that someone has taken a brush over the nearest pixel sampling image. There will be a large difference between bilinear sampling and nearest sampling when the picture is minimized or maximized. Then the texels don’t map to the pixels on a one to one ratio. Getting the nearest pixel may cause the image to be very grainy and not present itself with a flow. In those cases, it’s better to extrapolate the Color by examining the different pixels around the texel which is done by bilinear interpolation. </p>
 
 		<h1> Task 6: "Level Sampling" with mipmaps for texture mapping </h1>
-		<p>Level sampling refers to obtaining a feature for a specific coordinate by calculating the associated level for the specific coordinate and using that level to dictate where the feature comes from. In this specific case, we implement level sampling by doing the same supersampling that we’ve been doing for the previous parts. For each supersampled point, we obtain it’s texture coordinates (u, v). We then use u, v and other attributes to calculate the level for the coordinate. Since the level calculation returns a float, we can either calculate the specific level of the mipmap from which we obtain our texel by rounding the float (get the nearest level value), or get the Color values from the ceil(level) level and the floor(level) level and do linear interpolation between the values to get our final color.  </p>
+		<img src="task6l0pn.png" width="375" height="300">
+		<img src="task6l0pl.png" width="375" height="300">
+		<img src="task6lnpn.png" width="375" height="300">
+		<img src="task6lnpl.png" width="375" height="300">
 
-		<p> With pixel sampling, we don’t need to do extra computation in calculating the specific level. In terms of memory usage, we don’t require a lot of memory, since bilinear or nearest pixel sampling only require constant memory. Hence, it’s fast and memory efficient. In terms of antialiasing, nearest pixel sampling does a horrible job but bilinear sampling does a decent job as it does a weighted average between the neighboring pixels. </p>
+		<p>Level sampling refers to obtaining a feature for a specific coordinate by calculating an associated “level” for the specific coordinate and using that level to dictate which feature images the feature comes from. The “level” is calculated using attributes regarding positioning, frequency change, etc. In this specific case, we implement level sampling by doing the same supersampling that we’ve been doing for the previous parts. For each supersampled point, we obtain it’s texture coordinates (u, v). We then use u, v and other attributes to calculate the level for the coordinate. Since the level calculation returns a float, we can either calculate the specific level of the mipmap from which we obtain our texel by rounding the float (get the nearest level value), or get the Color values from the ceil(level) level and the floor(level) level and do linear interpolation between the values to get our final color.  </p>
+
+		<p> With pixel sampling, we don’t need to do extra computation in calculating the specific level. In terms of memory usage, we don’t require a lot of memory, since bilinear or nearest pixel sampling only requires constant memory. Hence, it’s fast and memory efficient. In terms of antialiasing, nearest pixel sampling does a horrible job but bilinear sampling does a decent job as it does a weighted average between the neighboring pixels.</p>
 
 		<p> With supersampling and choosing the number of samples per pixel, we add in more time as now instead of sampling one point, we sample sample_rate number of points per pixel. We also add space complexity by expanding our sample_buffer by sample_rate. However, we could get rid of space complexity by averaging the pixel values as we supersample instead of storing them and then supersampling. This will have a tradeoff with speed as with the prior method, there is room for vector optimization/parallelism. While the memory and runtime is not as efficient as some other methods, supersampling does a really good job when it comes to antialiasing, as averaging the supersampled pixel values is the same as using a convolution function to decrease frequency and then sample. </p>
 
 		<p> With level sampling, we need to store a mipmap that will keep track of the texture images at different levels. This is pretty memory efficient as it’s no more than keeping track of two regular texture images. In terms of runtime, there may be some computation time associated with calculating each level and accessing the mipmap at specific levels, but it can be negligible when looking at the whole picture. In terms of antialiasing, level sampling does a really good job as for objects far away, it will reduce aliasing while also no blurring objects that are close. It has a good contrast and is very useful in images with a lot of distance captured amongst them. </p>
 
-
-
+		<h1> Website Link </h1>
+		<p> https://cal-cs184-student.github.io/sp22-project-webpages-jasperchen3/ </p>
 
 	</body>
 </html>
