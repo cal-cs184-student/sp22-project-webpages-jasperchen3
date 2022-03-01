@@ -1,7 +1,311 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 2 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+  <style>
+    body {
+      padding: 100px;
+      width: 1000px;
+      margin: auto;
+      text-align: left;
+      font-weight: 300;
+      font-family: 'Open Sans', sans-serif;
+      color: #121212;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      font-family: 'Source Sans Pro', sans-serif;
+    }
+  </style>
+  <title>CS 184 Mesh Editor</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+
+
+<body>
+
+  <h1 align="middle">CS 184: Computer Graphics and Imaging, Spring 2022</h1>
+  <h1 align="middle">Project 2: Mesh Editor</h1>
+  <h2 align="middle">Dustin Luong, Jasper Chen</h2>
+  <h2 align="middle">Team Name: CS184-DJ</h2>
+
+  <br><br>
+
+  <div>
+
+    <h2 align="middle">Overview</h2>
+    <div>
+    <p>
+      We began this project with several control points and parameters and were able to derive a smooth curve, with differentiable first and
+      second derivatives using de Casteljau's algorithm. We extended that to Bezier surfaces and were able to model a 3D shape using flat shading
+      with similar principles. After that, we worked very closely with the half-edge data structure and other related components to be able to use Phong
+      shading, which allowed us to shade the mesh more accurately and as if there was a light source directed toward the object of interest. We then implmented the
+      edge-flip and edge-split algorithms, which were ultimately used in the upscaling operation to model a 3D object more finely.
+    </p>
+    <p>
+      This project was particularly interesting as it allowed us to begin to model objects in the 3D world, as well as change the shapes of parts of the object without
+      affecting other parts of the object. We can imagine that shifting vertices in some smooth, method way will lead to the modeling done in movies or animations without
+      having to rerender the entire mesh. This is in contrast to project 1, where we mostly worked with 2D objects and could not rotate them and see different parts of the object.
+    </div>
+
+    <h2 align="middle">Section I: Bezier Curves and Surfaces</h2>
+
+    <h3 align="middle">Part 1: Bezier curves with 1D de Casteljau subdivision</h3>
+        <div>
+          <p>
+            What Casteljau's algorithm does is that it takes a set of n control points and a parameter t and outputs a single point. It takes the n points and linearly interpolates between each adjacent point at the t
+            and this in turn results in n - 1 points. We then recursive run Casteljau's algorithm again on these n - 1 points until eventually we're left with only one point. If we repeat this procedure for many values of t from 0 to 1,
+            the points outputted will result in a smooth curve which we call the Bezier curve.
+          </p>
+          <p>
+            The way we implemented the algorithm was that most of the code was already given to us, but the only step we needed to implement was the recursive step. What we did was that we immediately
+            returned the vector of points if there was only a single point in the vector since that means we finished and our vector only contains the final interpolated point. Otherwise, what we did was first
+            initialize a vector. Then, we'd go through each adjacent point in the given vector of points and then linearly interpolate with the adjacent points and variable t which was provided to us in the form of a member variable in the BezierCurve class.
+            We'd call push_back on the result and store it in the initliazed vector. Once we were finished, we just returned the vector interpolated points.
+          </p>
+        </div>
+
+    <div align="middle">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="images/1-a.png" align="middle" width="400px" />
+            <figcaption align="middle">One level of evaluation.</figcaption>
+          </td>
+          <td>
+            <img src="images/1-b.png" align="middle" width="400px" />
+            <figcaption align="middle">Two levels of evaluation.</figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="images/1-c.png" align="middle" width="400px" />
+            <figcaption align="middle">Three levels of evaluation.</figcaption>
+          </td>
+           <td>
+            <img src="images/1-d.png" align="middle" width="400px" />
+            <figcaption align="middle">Four levels of evaluation.</figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="images/1-e.png" align="middle" width="400px" />
+            <figcaption align="middle">Five levels of evaluation.</figcaption>
+          </td>
+          <td>
+            <img src="images/1-f.png" align="middle" width="400px" />
+            <figcaption align="middle">Final curve.</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <img src="images/1-g.png" align="middle" width="400px" style="margin: 0 auto; display: block"/>
+    <figcaption align="middle">Slightly different Bezier curve.</figcaption>
+
+
+    <h3 align="middle">Part 2: Bezier surfaces with separable 1D de Casteljau subdivision</h3>
+
+    <img src="images/2.png" align="middle" width="400px" style="margin: 0 auto; display: block"/>
+    <figcaption align="middle">teapot.bez evaluated by our implementation.</figcaption>
+
+    <p>
+      Implementing Bezier surfaces with de Casteljau subdivision was, in essence, similar to part one. A notable difference between them
+      was that we were given a nxn grid of points in space, and each row represented a particular Bezier curve. For a particular parameter, u,
+      we were able to compute one final point for each of the curves, which in turn represented a curve. Then, as we vary from u to v, we are able to
+      generate points for each intemediate parameter and generate a surface as a result. Implementing the Bezier surface was similar to implementing the
+      Bezier curve, where we return a vector of points when there is only a single point left, which means that we are finished interpolating the points.
+      We repeated that for each row in our original grid, so we were able to retrieve a set of vectors, generating a surface.
+    </p>
+
+    <h2 align="middle">Section II: Sampling</h2>
+
+    <h3 align="middle">Part 3: Average normals for half-edge meshes</h3>
+    <div>
+      <div align="middle">
+        <table style="width=100%">
+          <tr>
+            <td>
+              <img src="images/3-before.png" align="middle" width="400px" />
+              <figcaption align="middle">Teapot without vertex normals. </figcaption>
+            </td>
+            <td>
+              <img src="images/3-after.png" align="middle" width="400px" />
+              <figcaption align="middle">Teapot with vertex normals. </figcaption>
+            </td>
+          </tr>
+        </table>
+      </div>
+        <p>When implementing the vertex normals function, we began by accessing a particular face and associated half edge for
+          that face. Using that half edge and the next pointers for the half edges, we were able to access all of the vertices
+          associated with the face, since we do not store pointers to vertices within the face data structure. We then computed the
+          normal vector for that particular face, then iterated through the other half edges extending from the same vertex using the
+          twin pointer associated with the half edges. We returned the sum of all the normal vectors for all of the faces of the triangles
+          connected to the vertex. </p>
+   </div>
+
+    <h3 align="middle">Part 4: Half-edge flip</h3>
+      <div>
+        <div align="middle">
+          <table style="width=100%">
+            <tr>
+              <td>
+                <img src="images/4-a.png" align="middle" width="400px" />
+                <figcaption align="middle">Teapot with no changes.</figcaption>
+              </td>
+              <td>
+                <img src="images/4-b.png" align="middle" width="400px" />
+                <figcaption align="middle">Teapot with several edge-flips.</figcaption>
+              </td>
+            </tr>
+          </table>
+        </div>
+          <p>When implementing the edge flip algorithm, we first accessed all data structures present in the original triangle,
+             including all of the half edges, edges, faces, and vertices. We do not introduce any new mesh components into our mesh when we apply the
+             edge flip operation, so we do not add or delete any elements. Instead, we take the old edge and reassign the half-edge associated with it,
+             as well as updating the twins and next half-edges for each respective half-edge. </p>
+          <p> When writing this function, the biggest difficulties lied in keeping track of all the necessary pointer updates that we needed
+              to change. One example of this would be changing the next half edge that a particular half edge pointed to, but not updating the twin
+              so that multiple iterations would lead to errors. We adddressed this issue by inspecting the GUI and comparing the pointers and the components
+              that half edges pointed to to an image drawn out and labeled accurately. </p>
+    </div>
+
+    <h3 align="middle">Part 5: Half-edge split</h3>
+    <div>
+      <div align="middle">
+        <table style="width=100%">
+          <tr>
+            <td>
+              <img src="images/5-ai.png" align="middle" width="400px" />
+              <figcaption align="middle">Teapot with no changes.</figcaption>
+            </td>
+            <td>
+              <img src="images/5-aii.png" align="middle" width="400px" />
+              <figcaption align="middle">Teapot with several edge-splits.</figcaption>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <img src="images/5-bi.png" align="middle" width="400px" />
+              <figcaption align="middle">Teapot with no changes.</figcaption>
+            </td>
+             <td>
+              <img src="images/5-bii.png" align="middle" width="400px" />
+              <figcaption align="middle">Teapot with several edge-splits and edge-flips.</figcaption>
+            </td>
+          </tr>
+        </table>
+      </div>
+          <p>
+            Implementing the half-edge split algorithm was very similar to part 4 and implementing the half-edge split algorithm. When starting off the
+            algorithm, just as in part 4, we accessed all the data structures present in the original triangle, including the half-edges, edges, faces,
+            and vertices. However, in contrast to part 4, the half-edge introduces many more data structures, including a new vertex, 4 new edges, 2 new
+            faces, and 8 new half edges. After creating the data structures, the algorithm loads our new data structures with pointers and we made edits to
+            existing data structures.
+          </p>
+          <p>
+            Much of the difficulty in implementing this algorithm was similar to part 4, where we lost track of which pointers needed to be updated and often
+            led to bugs when chaining together multiple edge splits. The first split would often work, but the data would not be updated correctly and cause
+            bugs when calling the edge split algorithm on a different edge. We approached this issue by inspecting the mesh components closest to the edge that
+            was split, such as the degree of adjacent vertices and the objects that half edges pointed to. We were able to detect a bug where two pointers were swapped,
+            causing one vertex to have degree one larger than it should have and another vertex to have degree one smaller than intended.
+          </p>
+    </div>
+
+    <h3 align="middle">Part 6: Loop subdivision for mesh upsampling</h3>
+    <div>
+          <p>
+            When implementing subdivision for mesh upsampling, we first began by computing the new position of existing vertices by considering its old positions and
+            the positions of its neighboring vertices. Next, we computed the locations of vertices that would form as a result of edge splitting by considering the
+            positions of vertices on and adjacent to the edge. We then split all the edges in our mesh and flipped any edge that connected a vertex that was already
+            in the mesh to a new vertex formed by edge splitting. Finally, we updated all positions of our vertices with our computed values.
+          </p>
+          <img src="images/6-bug.png" class="center" width="400px" style="margin: 0 auto; display: block"/>
+          <figcaption align="middle"> cube.dae with pointer errors </figcaption>
+          <p>
+            We encountered the most challenges when trying to implement and debug this method. The first problem we encountered was our cube completely being deformed
+            and having edges point to nowhere in space. We addressed this issue by returning to task 5 and the edge-split method, as we had not set the flags for isNew to be
+            true when creating those edges. Our next issue was that the cube looked correct on the inside, but behaved strangely on the corners, and the issue was caused by
+            our calculations being cast to integers instead of floats. After addressing that issue, our mesh appeared closer to the cube, but with a several "dents" in the mesh,
+            as shown in the image above. We addressed this issue again by revisiting the edge-split function and fixing issues with pointers, as well as explicitly deleting the
+            old edge that was split.
+          </p>
+          <div align="middle">
+            <table style="width=100%">
+              <tr>
+                <td>
+                  <img src="images/6-a.png" align="middle" width="400px" />
+                  <figcaption align="middle">Cube with no upscaling.</figcaption>
+                </td>
+                <td>
+                  <img src="images/6-b.png" align="middle" width="400px" />
+                  <figcaption align="middle">Cube with one upscaling operation.</figcaption>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <img src="images/6-c.png" align="middle" width="400px" />
+                  <figcaption align="middle">Cube with two upscaling operations.</figcaption>
+                </td>
+                 <td>
+                  <img src="images/6-d.png" align="middle" width="400px" />
+                  <figcaption align="middle">Cube with three upscaling operations.</figcaption>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <p>
+            Sharp corners and edges become smoother and smoother as we apply more upscaling operations. When we calculate new positions of
+            vertices in the upscaling operation, we take into account the number of vertices adjacent to it. The more adjacent verticies and the
+            more iterations of upscaling we apply to a mesh, sharper corners become closer and closer to the vertices next to it, giving a smoother
+            appearance to the mesh. However, the images above seem to show that the cube becomes more and more asymmetric when we apply more upscaling
+            operations. Specifically, the bottom corner closest to the front of the screen appears to extend out more than the other corners.
+          </p>
+          <div align="middle">
+            <table style="width=100%">
+              <tr>
+                <td>
+                  <img src="images/6-ei.png" align="middle" width="400px" />
+                  <figcaption align="middle">Preprocessed cube, no upscaling.</figcaption>
+                </td>
+                <td>
+                  <img src="images/6-eii.png" align="middle" width="400px" />
+                  <figcaption align="middle">Preprocessed cube, one upscaling operation.</figcaption>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <img src="images/6-eiii.png" align="middle" width="400px" />
+                  <figcaption align="middle">Preprocessed cube, two upscaling operations.</figcaption>
+                </td>
+                 <td>
+                  <img src="images/6-eiv.png" align="middle" width="400px" />
+                  <figcaption align="middle">Preprocessed cube, three upscaling operations.</figcaption>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <p>
+            One possibility for why the cube without preprocessing appears to be asymmetric as we apply more upscaling operations is that the edges were not
+            oriented uniformly across each face of the cube. For some faces, the edge came from the top left to bottom right, and for others, the edge came from the top
+            right to the bottom left. We preprocessed our cube by splitting each edge across every face on the cube, so that each face has two edges in the shape of an 'X'
+            across it. When we applied more upscaling operations afterward, the cube appears to be more symmetric and the corners of the cube appear to be smoother than the cube
+            that did not have any preprocessing. Furthermore, we can observe that in the middle of each face, there is still a square with two edges in the 'X' shope across it.
+          </p>
+    </div>
+
+
+    <h2 align="middle">Section III: Optional Extra Credit</h2>
+    <p>If you are not participating in the optional mesh competition, don't worry about this section!</p>
+
+    <h3 align="middle">Part 7: Design your own mesh!</h3>
+
+    <h2 align="middle">Website Link</h2>
+    <!--TODO: update with website link when hosted live -->
+</div>
+</body>
+
 </html>
