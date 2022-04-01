@@ -1,7 +1,179 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 3-2 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+      body {
+        padding: 100px;
+        width: 1000px;
+        margin: auto;
+        text-align: left;
+        font-weight: 300;
+        font-family: 'Open Sans', sans-serif;
+        color: #121212;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: 'Source Sans Pro', sans-serif;
+      }
+  </style>
+<title>Dustin Luong, Jasper Chen  |  CS 184</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+<body>
+<br />
+<h1 align="middle">Assignment 3-2: PathTracer</h1>
+    <h2 align="middle">Dustin Luong, Jasper Chen</h2>
+    <h2 align="middle">Team Name: p3-2-pathtracer-sp22-burgerking</h2>
+
+
+    <div class="padded">
+      <h2 align="middle"> Overview </h2>
+        <p>
+          In this project, we considered ray tracing with different materials, including mirror and glass materials and microfacet materials. Both both types of materials, our goal was to ultimately
+          define the sample_f() function for the corresponding material type to return a vector3D outlining the RGB colors directed toward the camera. Additionally, we would also populate pdf and wi variables,
+          indicating the probability we choose a certain direction for the ray to reflect in and the direction itself, respectively. For the mirror and glass materials, we implemented the functions to model the
+          behavior of light when the ray reflects and refracts off of surfaces. For the microfacet materials, we implemented functions to consider specific properties of materials, such as color and roughness in order
+          to determine the color that the camera is able to detect.
+        </p>
+    </div>
+
+    <h2 align="middle">Part 1: Mirror and Glass Materials</h2>
+    <div align="middle">
+      <table style="width=100%">
+          <tr>
+            <td>
+              <img src="images/part_1_spheres_m_0.png" align="middle" width="400px" />
+              <figcaption align="middle">CBspheres.dae, max depth 0 </figcaption>
+            </td>
+            <td>
+              <img src="images/part_1_spheres_m_1.png" align="middle" width="400px" />
+              <figcaption align="middle">CBspheres.dae, max depth 1 </figcaption>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <img src="images/part_1_spheres_m_2.png" align="middle" width="400px" />
+              <figcaption align="middle">CBspheres.dae, max depth 2 </figcaption>
+            </td>
+            <td>
+              <img src="images/part_1_spheres_m_3.png" align="middle" width="400px" />
+              <figcaption align="middle">CBspheres.dae, max depth 3 </figcaption>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <img src="images/part_1_spheres_m_4.png" align="middle" width="400px" />
+              <figcaption align="middle">CBspheres.dae, max depth 4 </figcaption>
+            </td>
+            <td>
+              <img src="images/part_1_spheres_m_5.png" align="middle" width="400px" />
+              <figcaption align="middle">CBspheres.dae, max depth 5 </figcaption>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <img src="images/part_1_spheres_m_100.png" align="middle" width="400px" />
+              <figcaption align="middle">CBspheres.dae, max depth 100 </figcaption>
+            </td>
+          </tr>
+      </table>
+    </div>
+
+    <div class="padded">
+      <p> With the max depth at 0, we can only see the light source which makes sense since the light isn't able to bounce off of any surfaces and to the camera.
+        With the max depth of 1, now we can see parts of the scene that can make it to the camera with one bounce. This includes the color on the walls since now the light can bounce off the walls and into the camera. We also see a reflection of the light source on the balls since now the light will bounce off the ball and into the camera. The left ball has a perfect reflection since it's a mirror material whereas the right ball is refracting so the light only reflects off the ball and into the camera with some probability.  </p>
+      <p> With 2 bounces allowed, now we can make out the scene in the ball on the left. This is because now the light now has enough bounces to hit the scene, enter the ball, and then exit the ball and into the camera. We can also see the color of the ceiling now since before with only one bounce there since with one bounce the light can't reach the ceiling since the light source is on the same plane as the light, but with two bounces this is now possible. The sphere on the right is lightly colored due to the small chance that a ray of light can be reflected off the sphere. </p>
+      <p>        With 3 bounces, the main changes are the right ball no longer being mostly black. This is because now the right sphere can be colored due to rays now having enough bounces to refract through the sphere and into the camera. We also get a ring of light below the right ball due to the light being able to fully pass through the sphere with two bounces and then hit the floor with its third bounce. Also, the ceiling is now colored in the left sphere. This is because the extra bounce allows the light the bounced from the ceiling the extra bounce it needs to bounce from the sphere and into the camera. </p>
+      <p> With 4 bounces, we see that the sphere in the reflection in the left sphere is now colored. With 4 bounces, the light can now hit the colored wall, enter the right sphere, exit the right sphere, and then hit the left sphere and enter the camera. </p>
+      <p>        We also see a small light shining on the bottom of the right wall. This comes from the light being reflected off the left ball, enter and exiting straight through the right ball, and then striking the wall at the bright spot.</p>
+      <p>        Finally, with 5 and 100 bounces, there are not more striking differences. The only main difference is that the rectangular reflection of the light source on the right ball becomes more complete as the number of bounces increases. This is because with more bounces, the light has more chances to successfully reflect off the surface and as a result, the rectangle becomes more filled. </p>
+
+    </div>
+
+
+    <h2 align="middle">Part 2: Microfacet Material</h2>
+    <div align="middle">
+      <table style="width=100%">
+          <tr>
+            <td>
+              <img src="images/part_2_dragon_005.png" align="middle" width="400px" />
+              <figcaption align="middle">CBdragon, alpha = 0.005 </figcaption>
+            </td>
+            <td>
+              <img src="images/part_2_dragon_05.png" align="middle" width="400px" />
+              <figcaption align="middle">CBdragon, alpha = 0.05 </figcaption>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <img src="images/part_2_dragon_25.png" align="middle" width="400px" />
+              <figcaption align="middle">CBdragon, alpha = 0.25 </figcaption>
+            </td>
+            <td>
+              <img src="images/part_2_dragon_5.png" align="middle" width="400px" />
+              <figcaption align="middle">CBdragon, alpha = 0.5 </figcaption>
+            </td>
+          </tr>
+      </table>
+    </div>
+      <p>
+
+      </p>
+      <p>
+        In the four images above, we rendered CBdragon_microfacet_au.dae with 256 samples per pixel, 4 samples per light, and a maximum ray depth of 7.
+        Each of the images above have a different value for alpha, the roughness of the material, where a smaller value for alpha indicates a smoother,
+        glossier surface and a larger value for alpha indicates a more diffuse object. As the value for alpha decreases, we are able to see more of the environment
+        reflected along the dragon. For the image with alpha = 0.5, we can somewhat see that the left side of the dragon reflects the red wall, but for the image with
+        alpha = 0.005, we additionally are able to notice that the front of the dragon reflects the black screen similarly to the mirror materials and the right side of
+        the dragon reflects the blue wall. As alpha decreases from 0.5 to 0.005, the reflections of the environment becomes more and more clear.
+      </p>
+    <div align="middle">
+      <table style="width=100%">
+          <tr>
+            <td>
+              <img src="images/part_2_bunny_h.png" align="middle" width="400px" />
+              <figcaption align="middle">CBbunny, hemisphere sampling </figcaption>
+            </td>
+            <td>
+              <img src="images/part_2_bunny_i.png" align="middle" width="400px" />
+              <figcaption align="middle">CBbunny, importance sampling </figcaption>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <img src="images/part_2_dragon_ag.png" align="middle" width="400px" />
+              <figcaption align="middle">CBdragon, eta and k for silver, alpha = 0.5 </figcaption>
+            </td>
+          </tr>
+      </table>
+  </div>
+  <p>
+    The first two images above show CBbunny_microfacet_cu.dae with 64 samples per pixel, 1 sample per light, and a maximum ray depth of 7. The image on the left was rendered
+    with hemisphere sampling and the image on the right was rendered with importance sampling. The image rendered with hemisphere sampling is dimmer and a bit more noisy
+    than the image rendered with importance sampling. More noticeably though, the image rendered with hemisphere sampling has many black regions on the bunny, particularly in the
+    regions where the sampling rate is higher. Specifically, the black regions are concentrated in regions where the image has a sharp change in color, such as the border between the bunny
+    and the environment and where there are textures along the bunny. We expect that this is because hemisphere sampling takes longer to converge, and if we increased the number of
+    samples per pixel, the image on the left would eventually appear similar to the image on the right.
+  </p>
+  <p>
+    The image on the bottom is CBdragon_microfacet_au.dae, but with eta and k changed to be consistent to the eta and k values of silver. The image appears to be similar to the image of the dragon
+    above with alpha = 0.5, but with a different color.
+  </p>
+
+  <h2 align="middle"> Responsibilities for the Project</h2>
+
+    <p>
+      In this project, we worked as a team to develop each task. We would often code at the same time, checking with each other for questions that we had, clarifying what certain functions did and the implementation of
+      pseudocode in lecture. When we discovered bugs in the project, we would also both attack the bug at the same time, letting each other know tests we were doing, discussing possible issues and dismissing other issues as
+      a non-cause for the bug.
+    </p>
+
+    <h2 align="middle"> Website Link </h2>
+    <p> https://cal-cs184-student.github.io/sp22-project-webpages-jasperchen3/ </p>
+
+</body>
 </html>
