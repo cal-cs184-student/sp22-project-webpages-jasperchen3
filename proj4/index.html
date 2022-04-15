@@ -1,7 +1,346 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 4 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>
+      body {
+        padding: 100px;
+        width: 1000px;
+        margin: auto;
+        text-align: left;
+        font-weight: 300;
+        font-family: 'Open Sans', sans-serif;
+        color: #121212;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: 'Source Sans Pro', sans-serif;
+      }
+  </style>
+<title>Dustin Luong, Jasper Chen  |  CS 184</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Source+Sans+Pro" rel="stylesheet">
+</head>
+<body>
+<br />
+<h1 align="middle">Assignment 4: Cloth Sim</h1>
+    <h2 align="middle">Dustin Luong, Jasper Chen</h2>
+    <h2 align="middle">Team Name: p4-pathtracer-sp22-innout</h2>
+
+
+    <div class="padded">
+      <h2 align="middle"> Overview </h2>
+        <p>
+          In this project, we implemented functions that would allow multiple particles in a system to behave similarly to how they would behave in the real world and simulated a cloth dropping
+          on multiple surfaces. In part 1 of this project, we implemented a mass and spring representation of a cloth, taking multiple particles and representing the forces between them as if there was
+          a spring, bringing them closer if the particles moved too far apart and repelling them if the particles moved too closely together, preventing the cloth from expanding or contracting excessively.
+          In part 2, we implemented functions that would be simulate the behavior of objects in real life, applying forces to point particles when they fall in space and preventing the forces between objects
+          from being deformed. In parts 3 and 4, we implemented functions that would simulate how objects interact with other objects (including itself), making sure it would not pass through objects or
+          fall into itself. Finally, in part 5, we implemented shaders, which allowed our cloth to be rendered as different surfaces and giving the appearance of texture on the surface.
+        </p>
+    </div>
+
+    <h2 align="middle">Part 1: Masses and Springs</h2>
+    <div align="middle">
+      <table style="width=100%">
+          <tr>
+            <td>
+              <img src="images/task1_default.png" align="middle" width="400px" />
+              <figcaption align="middle"> Cloth wireframe, angle 1 </figcaption>
+            </td>
+            <td>
+              <img src="images/task1_default_2.png" align="middle" width="400px" />
+              <figcaption align="middle"> Cloth wireframe, angle 2 </figcaption>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <img src="images/task1_no_shear.png" align="middle" width="400px" />
+              <figcaption align="middle"> Cloth wireframe, no shearing constraints</figcaption>
+            </td>
+            <td>
+              <img src="images/task1_shear.png" align="middle" width="400px" />
+              <figcaption align="middle"> Cloth wireframe, only shearing constraints </figcaption>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <img src="images/task1_all.png" align="middle" width="400px" />
+              <figcaption align="middle"> Cloth wireframe, all constraints </figcaption>
+            </td>
+          </tr>
+      </table>
+    </div>
+
+    <div class="padded">
+      <p>
+        The images above show a cloth wireframe pinned on all four corner before any simulation is run. The two images on top show two angles on the wireframe,
+        the third image shows the wireframe with no shearing constraints, the fourth shows the wireframe with only shearing constraints, and the fifth is a combination
+        of the third and fourth images.
+      </p>
+    </div>
+
+
+    <h2 align="middle">Part 2: Simulation via Numerical Integration</h2>
+    <div align="middle">
+      <table style="width=100%">
+          <tr>
+            <td>
+              <img src="images/task2_default_wire.png" align="middle" width="400px" />
+              <figcaption align="middle">Cloth wireframe, default parameters </figcaption>
+            </td>
+            <td>
+              <img src="images/task2_default_normal.png" align="middle" width="400px" />
+              <figcaption align="middle">Normal cloth, default parameters </figcaption>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <img src="images/task2_low_k.png" align="middle" width="400px" />
+              <figcaption align="middle">Normal cloth, k = 500 </figcaption>
+            </td>
+            <td>
+              <img src="images/task2_high_k.png" align="middle" width="400px" />
+              <figcaption align="middle">Normal cloth, k = 50000 </figcaption>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <img src="images/task2_low_damping.png" align="middle" width="400px" />
+              <figcaption align="middle">Cloth wireframe, damping = 0.0 </figcaption>
+            </td>
+            <td>
+              <img src="images/task2_high_damping.png" align="middle" width="400px" />
+              <figcaption align="middle">Cloth wireframe, damping = 1.0 </figcaption>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <img src="images/task2_low_density.png" align="middle" width="400px" />
+              <figcaption align="middle">Cloth wireframe, density = 0.15 </figcaption>
+            </td>
+            <td>
+              <img src="images/task2_high_density.png" align="middle" width="400px" />
+              <figcaption align="middle">Cloth wireframe, density = 1500 </figcaption>
+            </td>
+          </tr>
+      </table>
+    </div>
+    <p>
+      The first two images above show the cloth pinned on two corners with default parameters in both the wireframe and the normal shading scheme. The next
+      two images show the normal cloth with high and low values of ks. The following images show the wireframe cloth with high and low damping values and the last two show
+      the wireframe cloth with high and low density.
+    </p>
+    <p>
+      In the third and fourth images, we ran the simulation with a value of k = 500 and a value of k = 50000. For the lower k value, the image appears as if the cloth is not pinned
+      tightly, causing a looser resting position for the cloth. In contrast, the higher k value gives a sense that the two corners are pinned very tightly and the resting position looks very
+      taut. After the cloth falls, the bottom of the cloth for a low k value ripples a little bit, almost as if it is bouncing back, while the cloth with a high k value moves as if all the particles
+      are more tightly connected. This makes sense intuitively as well, as a higher ks value indicates that the force between each object is stronger and the entire cloth will tend to move all together
+      while a lower k value indicates the each part of the cloth may move in different ways.
+    </p>
+    <p>
+      The next two images show high and low values of damping, which is the amount of energy lost as the cloth moves
+      around due to gravity and other physical forces. The first image with low damping was generated when the cloth reached its lowest point and bounced back up. The cloth bounces up quite high since
+      there are no forces that reduce its velocity, and all of the energy is kept by the cloth. By the conservation of energy, it should be able to bounce back up to its highest point. Conversely, in the
+      image with high damping, the cloth loses much of its energy even before it reaches its restful state the first time. The cloth moves slowly down to its restful state, and when it does, does not bounce back
+      up very much.
+    </p>
+    <p>
+      The final two images show high and low density values. For a low density value, the cloth appears to drop less than the the cloth with a high density value. This is similar to a high k value for a low
+      density value and a low k value for a high density value.
+    </p>
+
+  <h2 align="middle">Part 3: Handing Collisions with other Objects</h2>
+  <div align="middle">
+    <table style="width=100%">
+        <tr>
+          <td>
+            <img src="images/task3_sphere_k_500.png" align="middle" width="400px" />
+            <figcaption align="middle">Cloth with sphere, k = 500 </figcaption>
+          </td>
+          <td>
+            <img src="images/task3_sphere_k_5000.png" align="middle" width="400px" />
+            <figcaption align="middle">Cloth with sphere, k = 5000 </figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="images/task3_sphere_k_50000.png" align="middle" width="400px" />
+            <figcaption align="middle">Cloth with sphere, k = 50000 </figcaption>
+          </td>
+          <td>
+            <img src="images/task3_plane_wire.png" align="middle" width="400px" />
+            <figcaption align="middle">Cloth with plane, wireframe </figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="images/task3_plane_normal.png" align="middle" width="400px" />
+            <figcaption align="middle">Cloth with plane, normal </figcaption>
+          </td>
+        </tr>
+    </table>
+  </div>
+
+  <p>
+    In the images above, we have three images of the cloth dropping on a sphere with different values of k, then two images of a cloth dropping on a plane with both
+    wireframe and normal shading. For the simulation of the cloth dropping on the sphere, as the value of k increases, there are fewer folds within the cloth and the cloth
+    is spread out more. This is consistent with the explanation in part two of the project, where a higher value of k indicates that the forces between the particles between the particles
+    are strong. Thus, the cloth tends to behave more similarly across different areas of the cloth, leading to fewer grooves and the cloth not sinking as low as the lower k values.
+  </p>
+
+  <h2 align="middle">Part 4: Handing Collisions with other Objects</h2>
+  <div align="middle">
+    <table style="width=100%">
+        <tr>
+          <td>
+            <img src="images/task4_low_k.png" align="middle" width="400px" />
+            <figcaption align="middle">Self collision cloth, k = 500 </figcaption>
+          </td>
+          <td>
+            <img src="images/task4_high_k.png" align="middle" width="400px" />
+            <figcaption align="middle">Self collision cloth, k = 50000 </figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="images/task4_low_density.png" align="middle" width="400px" />
+            <figcaption align="middle">Self collision cloth, density = 0.15 </figcaption>
+          </td>
+          <td>
+            <img src="images/task4_high_density.png" align="middle" width="400px" />
+            <figcaption align="middle">Self collision cloth, density = 1500 </figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="images/task4_initial.png" align="middle" width="400px" />
+            <figcaption align="middle">Self collision cloth, initial state </figcaption>
+          </td>
+          <td>
+            <img src="images/task4_collision.png" align="middle" width="400px" />
+            <figcaption align="middle">Self collision cloth, first contact </figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="images/task4_restful.png" align="middle" width="400px" />
+            <figcaption align="middle">Self collision cloth, restful state </figcaption>
+          </td>
+        </tr>
+    </table>
+  </div>
+  <p>
+    In the images above, we have screenshots of our cloth falling vertically against a plane and folding against itself. The last three images show the cloth
+    in various states of self collision, including the starting state, when it first touches the plane, and after the cloth comes to rest. The first two images show the cloth
+    with low and high values of k and the second two images show the cloth with low and high values for density. We first notice that the cloth with a low value for k correlates more
+    closely to the cloth with a high value for density and conversely the cloth with a high value for k correlates to a low value for density. Similarly to the cases above, the cloth with
+    higher values for k and lower values for density have fewer grooves and appear to behave more similarly to other regions of the cloth. We again believe that this is due to higher magnitudes of
+    forces between particles for the cloth. Conversely, the cloth with low values for k and high value for density has many more grooves and takes longer to settle down.
+  </p>
+
+  <h2 align="middle">Part 5: Shading</h2>
+  <div align="middle">
+    <table style="width=100%">
+        <tr>
+          <td>
+            <img src="images/task5_phong_diffuse.png" align="middle" width="400px" />
+            <figcaption align="middle">Blinn-Phong shading, diffuse only </figcaption>
+          </td>
+          <td>
+            <img src="images/task5_phong_specular.png" align="middle" width="400px" />
+            <figcaption align="middle">Blinn-Phong shading, specular only </figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="images/task5_phong_complete.png" align="middle" width="400px" />
+            <figcaption align="middle">Bling-Phong shading, all components </figcaption>
+          </td>
+          <td>
+            <img src="images/task5_mirror_sphere.png" align="middle" width="400px" />
+            <figcaption align="middle">Mirror shading on the sphere </figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="images/task5_mirror_cloth.png" align="middle" width="400px" />
+            <figcaption align="middle">Mirror shading on the cloth </figcaption>
+          </td>
+          <td>
+            <img src="images/task_5_bump_sphere.png" align="middle" width="400px" />
+            <figcaption align="middle">Bump shading on the sphere </figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="images/task_5_bump_cloth.png" align="middle" width="400px" />
+            <figcaption align="middle">Bump shading on the cloth </figcaption>
+          </td>
+          <td>
+            <img src="images/task_5_displacement_sphere.png" align="middle" width="400px" />
+            <figcaption align="middle">Displacement shading on the sphere </figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="images/task_5_displacement_cloth.png" align="middle" width="400px" />
+            <figcaption align="middle">Displacement shading on the cloth </figcaption>
+          </td>
+          <td>
+            <img src="images/task_5_bump_16.png" align="middle" width="400px" />
+            <figcaption align="middle">Bump shading -o 16 -a 16 </figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="images/task_5_bump_128.png" align="middle" width="400px" />
+            <figcaption align="middle">Bump shading -o 128 -a 128 </figcaption>
+          </td>
+          <td>
+            <img src="images/task_5_displacement_16.png" align="middle" width="400px" />
+            <figcaption align="middle">Displacement shading -o 16 -a 16 </figcaption>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <img src="images/task_5_displacement_128.png" align="middle" width="400px" />
+            <figcaption align="middle">Displacement shading -o 128 -a 128 </figcaption>
+          </td>
+        </tr>
+    </table>
+  </div>
+
+  <p>
+    Shader programs are programs that take in an input and outputs a four dimensional vector. This is particuarly useful when rendering simulations or images, since many objects
+    are involved with a position vector or a color vector. A vertex shader addresses the first of these vectors, where it will ultimately output a position of a vertex after applying
+    geometric transforms to a vertex, such as modifying the positions or considering normals to objects. When the cloth drops onto an object, it is the vertex shader that provides the new position
+    that vertex will arrive at. A fragment shader addresses the other vector, where reflections and physical properties of materials are considered to provide a final color or display that the camera
+    lens takes in. The output of the vertex shader is the input of the fragment shader.
+  </p>
+  <p>
+    When rendering Blinn-Phong shading, we considered both the diffuse components of specular components of light. More specifically, there are terms where light is not reflected strongly off of the surface and the
+    surface appears to be more monotonous. There are also terms for the specular components of light, where we are able to gain a sense of the direction light reflects off the surface. Combining the both of these
+    terms, we are able to have an image that is closer to the physical properties of the surface while giving a sense of where light intersects the surface, something we are unable to visualize only with a diffuse
+    shader.
+  </p>
+  <p>
+    In the simulation that used the texture mapping, we used texture_4 and for the simulation that used bump and displacement mapping, we used texture_3. In both situations, when we set the flags to be -o 16 -a 16,
+    the images appeared darker than having the flags to be higher. Further, our displacement mapping has the grooves more clearly noticeable than the bump mapping.
+  </p>
+
+  <h2 align="middle"> Responsibilities for the Project</h2>
+
+    <p>
+      In this project, we worked as a team to develop each task. We would often code at the same time, checking with each other for questions that we had, clarifying what certain functions did and the implementation of
+      pseudocode in lecture. When we discovered bugs in the project, we would also both attack the bug at the same time, letting each other know tests we were doing, discussing possible issues and dismissing other issues as
+      a non-cause for the bug.
+    </p>
+
+    <h2 align="middle"> Website Link </h2>
+    <p> https://cal-cs184-student.github.io/sp22-project-webpages-jasperchen3/ </p>
+
+</body>
 </html>
